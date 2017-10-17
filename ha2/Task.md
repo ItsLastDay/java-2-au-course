@@ -13,7 +13,7 @@
 - Класс должен реализовывать следующий интерфейс:
 
 ```java
-public interface LockFreeList<T> {
+public interface ru.au.java2.LockFreeList<T> {
     boolean isEmpty();
     
     /**
