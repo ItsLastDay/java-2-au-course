@@ -31,7 +31,8 @@ public class LockFreeListImplTest {
 
         lst.append("qwe");
         lst.append("wert");
-        lst.remove("qwe");
+        assertTrue(lst.remove("qwe"));
+        assertFalse(lst.remove("nonexistant"));
 
         assertFalse(lst.contains("qwe"));
         assertTrue(lst.contains("wert"));
@@ -104,7 +105,48 @@ public class LockFreeListImplTest {
                         e.printStackTrace();
                     }
 
-                    lst.remove(runnableNumber);
+                    assertTrue(lst.remove(runnableNumber));
+                }
+            });
+
+            workers[i].start();
+        }
+
+        for (int i = 0; i < numThreads; i++) {
+            workers[i].join();
+        }
+
+        System.out.println(((LockFreeListImpl)lst).debugSingleThreadSnapshot());
+        assertTrue(lst.isEmpty());
+        for (int i = 0; i < numThreads; i++) {
+            assertFalse(lst.contains(i));
+        }
+    }
+
+    @Test
+    void testConcurrentAppendDeleteGoodNumberOfElems() throws InterruptedException {
+        final int numThreads = 20;
+
+        final LockFreeList<Integer> lst = new LockFreeListImpl<Integer>();
+        final CyclicBarrier barrier = new CyclicBarrier(numThreads);
+
+        final Thread workers[] = new Thread[numThreads];
+
+        for (int i = 0; i < numThreads; i++) {
+            workers[i] = new Thread(new RunnableWithNumber(i) {
+                public void run() {
+                    try {
+                        barrier.await();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } catch (BrokenBarrierException e) {
+                        e.printStackTrace();
+                    }
+
+                    for (int i = 100 * runnableNumber; i < 100 * (runnableNumber + 1); i++) {
+                        lst.append(i);
+                        assertTrue(lst.remove(i));
+                    }
                 }
             });
 
@@ -116,8 +158,5 @@ public class LockFreeListImplTest {
         }
 
         assertTrue(lst.isEmpty());
-        for (int i = 0; i < numThreads; i++) {
-            assertFalse(lst.contains(i));
-        }
     }
 }

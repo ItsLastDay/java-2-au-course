@@ -15,7 +15,7 @@
       <module name="barrier_test" target="1.8" />
       <module name="ha1_main" target="1.8" />
       <module name="ha1_test" target="1.8" />
-      <module name="java-2-au-course" target="1.5" />
+      <module name="java-2-au-course" target="1.8" />
       <module name="java-2-au-course-ha1_main" target="1.8" />
       <module name="java-2-au-course-ha1_test" target="1.8" />
     </bytecodeTargetLevel>
