@@ -1,8 +1,6 @@
 package ru.au.java2;
 
-import java.util.*;
 import java.util.concurrent.atomic.AtomicStampedReference;
-import java.util.function.Predicate;
 
 public class LockFreeListImpl<T> implements LockFreeList<T> {
     private static class ListNode<T> {
@@ -20,128 +18,114 @@ public class LockFreeListImpl<T> implements LockFreeList<T> {
         }
     }
 
-    private static class PositionDescriptor<T> {
-        private ListNode<T> first, second, third;
-        private boolean hasMatchedPredicate;
+    private ListNode<T> tail = new ListNode<>(null);
+    private ListNode<T> head = new ListNode<>(null, tail);
 
-        PositionDescriptor(ListNode<T> f, ListNode<T> s, ListNode<T> t) {
-            first = f;
-            second = s;
-            third = t;
+    private class SearchResult {
+        private ListNode<T> left, right;
+    }
+
+    private SearchResult search(T key) {
+        SearchResult res = new SearchResult();
+
+        while (true) {
+            ListNode<T> t = head;
+            int tNextStamp[] = new int[1];
+            ListNode<T> tNext = head.next.get(tNextStamp);
+
+            ListNode<T> leftNodeNext = null;
+
+            do {
+                if (tNextStamp[0] == 0) {
+                    res.left = t;
+                    leftNodeNext = tNext;
+                }
+
+                t = tNext;
+                if (t == tail)
+                    break;
+                tNext = t.next.get(tNextStamp);
+            } while (tNextStamp[0] == 1 || !t.elem.equals(key));
+            res.right = t;
+
+            if (leftNodeNext == res.right) {
+                if (res.right != tail && res.right.next.getStamp() == 1)
+                    continue;
+                else
+                    return res;
+            }
+
+            if (res.left.next.compareAndSet(leftNodeNext, res.right, 0, 0)) {
+                if (res.right != tail && res.right.next.getStamp() == 1)
+                    continue;
+                else
+                    return res;
+            }
         }
     }
 
-    // rootNode -> nextToRootNode -> everything else
-    private ListNode<T> nextToRootNode = new ListNode<>(null);
-    private ListNode<T> rootNode = new ListNode<>(null, nextToRootNode);
-
+    @Override
     public boolean isEmpty() {
-        return nextToRootNode.next.getReference() == null;
+        return head.next.getReference() == tail;
     }
 
-    private PositionDescriptor<T> walkUntil(Predicate<ListNode<T>> pred) {
-        PositionDescriptor<T> result = new PositionDescriptor<>(rootNode,
-                nextToRootNode, nextToRootNode.next.getReference());
-
-        while (result.third != null && !pred.test(result.third)) {
-            result.first = result.second;
-            result.second = result.third;
-            result.third = result.third.next.getReference();
+    @Override
+    public void append(T value) {
+        if (value == null) {
+            throw new RuntimeException("Cannot insert null to list");
         }
 
-        result.hasMatchedPredicate = pred.test(result.third);
+        while (true) {
+            SearchResult res = search(null);
+            if (res.right != tail) {
+                throw new RuntimeException("Expected to arrive at tail");
+            }
 
-        return result;
+            ListNode<T> newNode = new ListNode<>(value, res.right);
+
+            if (res.left.next.compareAndSet(res.right, newNode, 0, 0))
+                break;
+        }
     }
 
-    /**
-     * Given a position descriptor <first, second, third>, try to do
-     *  second.next = newRef
-     *
-     * In order to do that, modify stamp between `first` and `second`. If that fails,
-     * then somebody tried to modify this node and we should back off.
-     *
-     * If stamp is modified, try to replace current "second.next" with the new one.
-     * If CAS fails, then back off.
-     *
-     * I thought it would be easier to implement this, rather than to try to understand
-     * Harris list. But I can be wrong and this produces live-locks.
-     *
-     * @param positionDesc
-     * @param newRef
-     * @return: whether we succeeded.
-     */
-    private boolean tryAssignRef(PositionDescriptor<T> positionDesc, ListNode<T> newRef) {
-        int curSecondStamp = positionDesc.second.next.getStamp();
-
-        int[] curFirstStamp = new int[1];
-        ListNode<T> firstNextRef = positionDesc.first.next.get(curFirstStamp);
-        if (!positionDesc.first.next.compareAndSet(firstNextRef, firstNextRef, curFirstStamp[0],
-                curFirstStamp[0] + 1)) {
+    @Override
+    public boolean remove(T value) {
+        if (value == null) {
             return false;
         }
 
-        if (!positionDesc.second.next.compareAndSet(positionDesc.third, newRef,
-                curSecondStamp, curSecondStamp)) {
-            return false;
+        SearchResult res;
+        ListNode<T> rightNext;
+
+        while (true) {
+            res = search(value);
+
+            if (res.right == tail || !res.right.elem.equals(value))
+                return false;
+
+            int rightStamp[] = new int[1];
+            rightNext = res.right.next.get(rightStamp);
+            if (rightStamp[0] == 0) {
+                if (res.right.next.compareAndSet(rightNext, rightNext, 0, 1)) {
+                    break;
+                }
+            }
+        }
+
+        if (!res.left.next.compareAndSet(res.right, rightNext, 0, 0)) {
+            search(res.right.elem);
         }
 
         return true;
     }
 
-    public void append(T value) {
-        final ListNode<T> newNode = new ListNode<>(value);
-
-        while (true) {
-            PositionDescriptor<T> positionDesc = walkUntil(Objects::isNull);
-            if (!positionDesc.hasMatchedPredicate) {
-                throw new RuntimeException("Could not find list end");
-            }
-
-            if (tryAssignRef(positionDesc, newNode)) {
-                break;
-            }
-        }
-    }
-
-    private Predicate<ListNode<T>> getFindPredicate(T value) {
-        return x -> x != null && x.elem.equals(value);
-    }
-
-    // Returns "true" if contained
-    public boolean remove(T value) {
-        while (true) {
-            PositionDescriptor<T> positionDesc = walkUntil(getFindPredicate(value));
-            if (!positionDesc.hasMatchedPredicate) {
-                return false;
-            }
-
-            if (tryAssignRef(positionDesc, positionDesc.third.next.getReference())) {
-                return true;
-            }
-        }
-    }
-
+    @Override
     public boolean contains(T value) {
-        PositionDescriptor<T> positionDesc = walkUntil(getFindPredicate(value));
-        return positionDesc.hasMatchedPredicate;
-    }
-
-    public List<T> debugSingleThreadSnapshot() {
-        List<T> lst = new ArrayList<>();
-
-        ListNode<T> cur = nextToRootNode.next.getReference();
-        while (cur != null) {
-            lst.add(cur.elem);
-            cur = cur.next.getReference();
+        if (value == null) {
+            return false;
         }
-
-        return lst;
+        SearchResult res = search(value);
+        return value.equals(res.right.elem);
     }
 
-    public Set<T> debugSet() {
-        Set<T> set = new HashSet<>();
-        set.addAll(debugSingleThreadSnapshot());
-        return set;
-    }
 }

@@ -13,7 +13,7 @@ public class LockFreeListImplTest {
 
     @Test
     void testAppend() {
-        LockFreeList<String> lst = new LockFreeListImpl<String>();
+        LockFreeList<String> lst = new LockFreeListImpl<>();
 
         lst.append("1");
         lst.append("2");
@@ -27,7 +27,7 @@ public class LockFreeListImplTest {
 
     @Test
     void testRemove() {
-        LockFreeList<String> lst = new LockFreeListImpl<String>();
+        LockFreeList<String> lst = new LockFreeListImpl<>();
 
         lst.append("qwe");
         lst.append("wert");
@@ -40,7 +40,7 @@ public class LockFreeListImplTest {
 
     @Test
     void testContains() {
-        LockFreeList<Integer> lst = new LockFreeListImpl<Integer>();
+        LockFreeList<Integer> lst = new LockFreeListImpl<>();
         assertFalse(lst.contains(123));
         lst.append(123);
         assertTrue(lst.contains(123));
@@ -48,7 +48,7 @@ public class LockFreeListImplTest {
 
     @Test
     void testIsEmpty() {
-        LockFreeList<Integer> lst = new LockFreeListImpl<Integer>();
+        LockFreeList<Integer> lst = new LockFreeListImpl<>();
         assertTrue(lst.isEmpty());
 
         lst.append(5);
@@ -60,7 +60,7 @@ public class LockFreeListImplTest {
     void testSimultaneousAddThenDelete() throws InterruptedException {
         final int numThreads = 300;
 
-        final LockFreeList<Integer> lst = new LockFreeListImpl<Integer>();
+        final LockFreeList<Integer> lst = new LockFreeListImpl<>();
         final CyclicBarrier barrier = new CyclicBarrier(numThreads);
 
         final Thread workers[] = new Thread[numThreads];
@@ -70,9 +70,7 @@ public class LockFreeListImplTest {
                 public void run() {
                     try {
                         barrier.await();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    } catch (BrokenBarrierException e) {
+                    } catch (InterruptedException | BrokenBarrierException e) {
                         e.printStackTrace();
                     }
 
@@ -99,9 +97,7 @@ public class LockFreeListImplTest {
                 public void run() {
                     try {
                         barrier.await();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    } catch (BrokenBarrierException e) {
+                    } catch (InterruptedException | BrokenBarrierException e) {
                         e.printStackTrace();
                     }
 
@@ -116,18 +112,16 @@ public class LockFreeListImplTest {
             workers[i].join();
         }
 
-        System.out.println(((LockFreeListImpl)lst).debugSingleThreadSnapshot());
         assertTrue(lst.isEmpty());
         for (int i = 0; i < numThreads; i++) {
             assertFalse(lst.contains(i));
         }
     }
 
-    @Test
-    void testConcurrentAppendDeleteGoodNumberOfElems() throws InterruptedException {
+    private void appendAndThenDeleteSeveralThreads(boolean intersectedElems) throws InterruptedException {
         final int numThreads = 20;
 
-        final LockFreeList<Integer> lst = new LockFreeListImpl<Integer>();
+        final LockFreeList<Integer> lst = new LockFreeListImpl<>();
         final CyclicBarrier barrier = new CyclicBarrier(numThreads);
 
         final Thread workers[] = new Thread[numThreads];
@@ -137,13 +131,19 @@ public class LockFreeListImplTest {
                 public void run() {
                     try {
                         barrier.await();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    } catch (BrokenBarrierException e) {
+                    } catch (InterruptedException | BrokenBarrierException e) {
                         e.printStackTrace();
                     }
 
-                    for (int i = 100 * runnableNumber; i < 100 * (runnableNumber + 1); i++) {
+                    int start = 100 * runnableNumber;
+                    int end = 100 * (runnableNumber + 1);
+
+                    if (intersectedElems) {
+                        start = 0;
+                        end = 100;
+                    }
+
+                    for (int i = start; i < end; i++) {
                         lst.append(i);
                         assertTrue(lst.remove(i));
                     }
@@ -158,5 +158,15 @@ public class LockFreeListImplTest {
         }
 
         assertTrue(lst.isEmpty());
+    }
+
+    @Test
+    void testConcurrentAppendDeleteSeparate() throws InterruptedException {
+        appendAndThenDeleteSeveralThreads(false);
+    }
+
+    @Test
+    void testConcurrentAppendDeleteIntersected() throws InterruptedException {
+        appendAndThenDeleteSeveralThreads(true);
     }
 }
