@@ -18,8 +18,8 @@ public class LockFreeListImpl<T> implements LockFreeList<T> {
         }
     }
 
-    private ListNode<T> tail = new ListNode<>(null);
-    private ListNode<T> head = new ListNode<>(null, tail);
+    private final ListNode<T> tail = new ListNode<>(null);
+    private final ListNode<T> head = new ListNode<>(null, tail);
 
     private class SearchResult {
         private ListNode<T> left, right;
