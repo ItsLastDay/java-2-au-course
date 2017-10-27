@@ -6,13 +6,13 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class ThreadPoolImpl {
-    private int num_threads;
+    private final int numThreads;
     private Thread[] workers;
     private final Queue<LightFutureImpl<?>> taskQueue = new ArrayDeque<>();
 
     private void initializeWorkers() {
-        workers = new Thread[num_threads];
-        for (int i = 0; i < num_threads; i++) {
+        workers = new Thread[numThreads];
+        for (int i = 0; i < numThreads; i++) {
             workers[i] = new Thread(() -> {
                 while (!Thread.interrupted()) {
                     LightFutureImpl<?> task;
@@ -31,13 +31,13 @@ public class ThreadPoolImpl {
             });
         }
 
-        for (int i = 0; i < num_threads; i++) {
+        for (int i = 0; i < numThreads; i++) {
             workers[i].start();
         }
     }
 
     public ThreadPoolImpl(int n) {
-        num_threads = n;
+        numThreads = n;
         initializeWorkers();
     }
 
