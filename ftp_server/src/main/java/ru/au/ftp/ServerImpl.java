@@ -2,6 +2,7 @@ package ru.au.ftp;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -13,13 +14,23 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ServerImpl implements Server {
+    private int port;
+    private volatile boolean portReady = false;
+    private Thread serverThread = null;
+
     private void serverEventLoop(Socket clientSocket) {
         try (
             DataInputStream inputStream = new DataInputStream(clientSocket.getInputStream());
             DataOutputStream outputStream = new DataOutputStream(clientSocket.getOutputStream())
         ) {
             while (!clientSocket.isClosed()) {
-                Commands command = Commands.valueOf(inputStream.readInt());
+                Commands command;
+                try {
+                    command = Commands.valueOf(inputStream.readInt());
+                } catch (EOFException e) {
+                    break;
+                }
+
                 Path path;
 
                 switch (command) {
@@ -67,16 +78,36 @@ public class ServerImpl implements Server {
     }
 
     @Override
+    public int getPort() {
+        while (!portReady)
+            Thread.yield();
+        return port;
+    }
+
+    private void setPort(int portNumber) {
+        port = portNumber;
+        portReady = true;
+    }
+
+    @Override
     public void start(int portNumber) throws IOException {
-        try (ServerSocket serverSocket = new ServerSocket(portNumber)) {
-            System.out.printf("Server started at port %d, addr %s",
-                    serverSocket.getLocalPort(),
-                    serverSocket.getInetAddress());
-            while (true) {
-                Socket clientSocket = serverSocket.accept();
-                new Thread(() -> serverEventLoop(clientSocket)).start();
+        serverThread = new Thread(() -> {
+            try (ServerSocket serverSocket = new ServerSocket(portNumber)) {
+                setPort(serverSocket.getLocalPort());
+
+                System.out.printf("Server started at port %d, addr %s\n",
+                        port,
+                        serverSocket.getInetAddress());
+                while (!Thread.currentThread().isInterrupted()) {
+                    Socket clientSocket = serverSocket.accept();
+                    new Thread(() -> serverEventLoop(clientSocket)).start();
+                }
+            } catch (IOException e) {
+                System.out.println("I/O error in main server thread:\n");
+                e.printStackTrace();
             }
-        }
+        });
+        serverThread.start();
     }
 
     @Override
@@ -86,5 +117,10 @@ public class ServerImpl implements Server {
         // NOTE: if `start(int)` uses something other than ServerSocket,
         //       this method should be revised.
         start(0);
+    }
+
+    @Override
+    public void shutdown() {
+        serverThread.interrupt();
     }
 }

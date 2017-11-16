@@ -9,14 +9,19 @@ import java.util.Objects;
 
 public class Runner {
     public static void main(String[] args) throws IOException {
-        if (Objects.equals(args[1], "server")) {
+        if (args.length == 0) {
+            System.out.println("Usage: prog.class client port --- start client that connects to localhost on the specified port,\n" + 
+                               "       prog.class server --- start server");
+        }
+
+        if (Objects.equals(args[0], "server")) {
             Server server = new ServerImpl();
             server.start();
         } else {
             Console c = System.console();
 
             Client client = new ClientImpl();
-            client.connect(InetAddress.getLocalHost(), Integer.valueOf(args[2]));
+            client.connect(InetAddress.getLocalHost(), Integer.valueOf(args[1]));
             while (true) {
                 int cmd = Integer.valueOf(c.readLine("Enter command (1 - list, 2 - get, 3 - exit): "));
                 String path = c.readLine("Enter path: ");
