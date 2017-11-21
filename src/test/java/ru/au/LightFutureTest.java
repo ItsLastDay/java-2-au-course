@@ -77,5 +77,4 @@ public class LightFutureTest {
         LightFuture<String> futureThrower = pool.send(() -> { throw new RuntimeException(); });
         futureThrower.get();
     }
-
 }

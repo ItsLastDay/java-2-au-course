@@ -1,17 +1,18 @@
 package ru.spbau;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class ThreadPoolImpl {
     private final int numThreads;
-    private Thread[] workers;
-    private final Queue<LightFutureImpl<?>> taskQueue = new ArrayDeque<>();
+    private final Thread[] workers;
+    private final Queue<LightFuture<?>> taskQueue = new ArrayDeque<>();
 
     private void initializeWorkers() {
-        workers = new Thread[numThreads];
         for (int i = 0; i < numThreads; i++) {
             workers[i] = new Thread(() -> {
                 while (!Thread.interrupted()) {
@@ -24,9 +25,9 @@ public class ThreadPoolImpl {
                                 return;
                             }
                         }
-                        task = taskQueue.poll();
+                        task = (LightFutureImpl<?>) taskQueue.poll();
                     }
-                    task.setResult();
+                    task.calcAndStoreResult();
                 }
             });
         }
@@ -38,17 +39,20 @@ public class ThreadPoolImpl {
 
     public ThreadPoolImpl(int n) {
         numThreads = n;
+        workers = new Thread[numThreads];
         initializeWorkers();
     }
 
-    public <T> LightFuture<T> send(Supplier<T> supplier) {
-        LightFutureImpl<T> pendingTask = new LightFutureImpl<>(supplier);
-
+    private <T> void addFuture(LightFuture<T> future) {
         synchronized (taskQueue) {
-            taskQueue.add(pendingTask);
+            taskQueue.add(future);
             taskQueue.notify();
         }
+    }
 
+    public <T> LightFuture<T> send(Supplier<T> supplier) {
+        LightFuture<T> pendingTask = new LightFutureImpl<>(supplier);
+        addFuture(pendingTask);
         return pendingTask;
     }
 
@@ -58,25 +62,35 @@ public class ThreadPoolImpl {
         }
     }
 
-
     private class LightFutureImpl<T> implements LightFuture<T> {
-        volatile T result;
-        volatile boolean isReady;
-        volatile boolean hadException;
-        Supplier<T> supplier;
+        private volatile T result;
+        private volatile boolean isReady;
+        private volatile boolean hadException;
+        private Throwable excThrown = null;
+        private Supplier<T> supplier;
+
+        private final List<LightFuture<?>> thenTasks = new ArrayList<>();
+
+        private <R> LightFuture<R> sendToPool(Supplier<R> supplier) {
+            return ThreadPoolImpl.this.send(supplier);
+        }
 
         LightFutureImpl(Supplier<T> supplier) {
             this.supplier = supplier;
         }
 
-        private synchronized void setResult() {
+        private synchronized void calcAndStoreResult() {
             try {
                 result = supplier.get();
             } catch (Exception ex) {
                 hadException = true;
+                excThrown = ex;
             }
             isReady = true;
-            this.notifyAll();
+            synchronized (thenTasks) {
+                thenTasks.forEach(ThreadPoolImpl.this::addFuture);
+            }
+            notifyAll();
         }
 
         @Override
@@ -86,31 +100,37 @@ public class ThreadPoolImpl {
 
         @Override
         public synchronized T get() {
-            if (!isReady()) {
-                try {
+            try {
+                while (!isReady()) {
                     this.wait();
-                } catch (InterruptedException e) {
                 }
+            } catch (InterruptedException e) {
+                throw new LightExecutionException(e);
             }
 
             if (hadException) {
-                throw new LightExecutionException();
+                throw new LightExecutionException(excThrown);
             }
 
             return result;
         }
 
         @Override
-        public <R> LightFuture<R> thenApply(Function<T, R> f) {
-            return ThreadPoolImpl.this.send(() -> {
-                synchronized (LightFutureImpl.this) {
-                    while (!isReady()) try {
-                        LightFutureImpl.this.wait();
-                    } catch (InterruptedException e) {
-                    }
+        public <R> LightFuture<R> thenApply(Function<? super T, R> f) {
+            Supplier<R> supplier = () -> f.apply(LightFutureImpl.this.get());
+            if (isReady()) {
+                return sendToPool(supplier);
+            }
+
+            synchronized (thenTasks) {
+                if (!isReady()) {
+                    LightFuture<R> future = new LightFutureImpl<>(supplier);
+                    thenTasks.add(future);
+                    return future;
                 }
-                return f.apply(LightFutureImpl.this.get());
-            });
+                
+                return sendToPool(supplier);
+            }
         }
     }
 }

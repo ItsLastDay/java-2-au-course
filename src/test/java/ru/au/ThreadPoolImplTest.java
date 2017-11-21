@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static ru.au.TestUtils.longTask;
 
 public class ThreadPoolImplTest {
     @Test
@@ -62,5 +64,22 @@ public class ThreadPoolImplTest {
     public void testStartAndShutdown() {
         ThreadPoolImpl pool = new ThreadPoolImpl(3);
         pool.shutdown();
+    }
+
+    @Test
+    public void testThenApplyDoesNotBlockWork() throws InterruptedException {
+        ThreadPoolImpl pool = new ThreadPoolImpl(2);
+
+        LightFuture<Integer> future = pool.send(longTask);
+        // This task should not block the next one.
+        future.thenApply(x -> x * 2);
+        LightFuture<Integer> futureNotDelayed = pool.send(() -> 5);
+
+        // Sleep for little time, so that:
+        //   `future` is not done yet
+        //   `futureNotDelayed` had a chance to complete
+        Thread.sleep(20);
+        assertTrue(futureNotDelayed.isReady());
+        assertFalse(future.isReady());
     }
 }
