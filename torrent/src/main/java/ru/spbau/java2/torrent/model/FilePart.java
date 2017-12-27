@@ -6,7 +6,7 @@ public class FilePart {
     private final PartId partIdx;
 
     public FilePart(byte[] content, FileId id, PartId partIdx) {
-        this.content = Constants.normalize(content);
+        this.content = Constants.normalizeBytesToFilepart(content);
         this.id = id;
         this.partIdx = partIdx;
     }

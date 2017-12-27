@@ -36,6 +36,18 @@ public class WireFormat {
         throw new ProtocolViolation();
     }
 
+
+    public void serverWriteSomeMessage(Message msg) throws IOException {
+        if (ListAnswer.class.isInstance(msg))
+            serializeListAnswer((ListAnswer) msg);
+        if (UploadAnswer.class.isInstance(msg))
+            serializeUploadAnswer((UploadAnswer) msg);
+        if (SourcesAnswer.class.isInstance(msg))
+            serializeSourcesAnswer((SourcesAnswer) msg);
+        if (UpdateAnswer.class.isInstance(msg))
+            serializeUpdateAnswer((UpdateAnswer) msg);
+    }
+
     public Message clientReadSomeMessage() throws IOException {
         readHeader();
         if (headerValue == 1)
@@ -212,4 +224,5 @@ public class WireFormat {
     public UploadAnswer deserializeUploadAnswer() throws IOException {
         return new UploadAnswer(FileId.fromStream(in));
     }
+
 }

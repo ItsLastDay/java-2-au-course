@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.Objects;
 
 public class ClientDescriptor {
     private final InetAddress addr;
@@ -32,5 +33,19 @@ public class ClientDescriptor {
         in.readFully(addr);
         short port = in.readShort();
         return new ClientDescriptor(InetAddress.getByAddress(addr), port);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ClientDescriptor that = (ClientDescriptor) o;
+        return getPort() == that.getPort() &&
+                Objects.equals(addr, that.addr);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(addr, getPort());
     }
 }
