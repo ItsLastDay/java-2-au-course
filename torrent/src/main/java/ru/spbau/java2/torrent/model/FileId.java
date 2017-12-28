@@ -20,7 +20,7 @@ public class FileId {
         out.writeInt(id);
     }
 
-    static FileId fromStream(DataInputStream in) throws IOException {
+    public static FileId fromStream(DataInputStream in) throws IOException {
         int id = in.readInt();
         return new FileId(id);
     }

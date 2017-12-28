@@ -22,10 +22,7 @@ public class ServerWorker implements Runnable {
                 (short) client.getPort());
         this.state = state;
 
-        DataOutputStream out = new DataOutputStream(client.getOutputStream());
-        DataInputStream in = new DataInputStream(client.getInputStream());
-
-        wireFormatter = new WireFormat(out, in);
+        wireFormatter = new WireFormat(client);
         executor = new ServerQueryExecutor(this.client, state, wireFormatter);
         state.registerWorker(this.client, this);
     }

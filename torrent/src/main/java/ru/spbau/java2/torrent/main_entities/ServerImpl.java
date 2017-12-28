@@ -12,7 +12,7 @@ import java.net.ServerSocket;
 public class ServerImpl {
     private final Thread serverListenerThread;
 
-    ServerImpl() throws IOException {
+    public ServerImpl() throws IOException {
         ServerSocket serverSocket = new ServerSocket(Constants.SERVER_PORT);
         serverListenerThread = new Thread(new ServerNetworkListener(serverSocket));
     }

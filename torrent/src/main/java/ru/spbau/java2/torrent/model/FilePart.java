@@ -1,14 +1,26 @@
 package ru.spbau.java2.torrent.model;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class FilePart {
-    private final byte[] content;
     private final FileId id;
     private final PartId partIdx;
+    private final Path backingFilePath;
 
-    public FilePart(byte[] content, FileId id, PartId partIdx) {
-        this.content = Constants.normalizeBytesToFilepart(content);
+    public Path getBackingFilePath() {
+        return backingFilePath;
+    }
+
+
+    public FilePart(FileId id, PartId partIdx,
+                    Path backingFilePath) {
         this.id = id;
         this.partIdx = partIdx;
+        this.backingFilePath = backingFilePath;
     }
 
     public PartId getPartIdx() {
@@ -19,7 +31,16 @@ public class FilePart {
         return id;
     }
 
-    public byte[] getContent() {
-        return content;
+    public void writeTo(DataOutputStream out) throws IOException {
+        id.writeTo(out);
+        partIdx.writeTo(out);
+        out.writeUTF(backingFilePath.toString());
+    }
+
+    public static FilePart fromStream(DataInputStream in) throws IOException {
+        FileId fileId = FileId.fromStream(in);
+        PartId partId = PartId.fromStream(in);
+        String path = in.readUTF();
+        return new FilePart(fileId, partId, Paths.get(path));
     }
 }

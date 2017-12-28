@@ -4,6 +4,7 @@ import ru.spbau.java2.torrent.exceptions.ProtocolViolation;
 import ru.spbau.java2.torrent.messages.*;
 
 import java.io.*;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -13,6 +14,11 @@ public class WireFormat {
 
     private static final byte HEADER_BOGUS_VALUE = 10;
     private byte headerValue;
+
+    public WireFormat(Socket client) throws IOException {
+        out = new DataOutputStream(client.getOutputStream());
+        in = new DataInputStream(client.getInputStream());
+    }
 
     public WireFormat(OutputStream out, InputStream in) {
         this.out = new DataOutputStream(out);
@@ -78,14 +84,14 @@ public class WireFormat {
     public void serializeGet(Get msg) throws IOException {
         writeHeader(2);
         msg.getId().writeTo(out);
-        out.writeInt(msg.getPartIndex());
+        out.writeInt(msg.getPartIndex().getId());
     }
 
     public Get deserializeGet() throws IOException {
         assertHeader(2);
         FileId id = FileId.fromStream(in);
         int partIdx = in.readInt();
-        return new Get(id, partIdx);
+        return new Get(id, new PartId(partIdx));
     }
 
     public void serializeGetAnswer(GetAnswer msg) throws IOException {

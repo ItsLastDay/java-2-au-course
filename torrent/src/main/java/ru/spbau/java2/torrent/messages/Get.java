@@ -1,12 +1,13 @@
 package ru.spbau.java2.torrent.messages;
 
 import ru.spbau.java2.torrent.model.FileId;
+import ru.spbau.java2.torrent.model.PartId;
 
 public class Get implements Message {
     private final FileId id;
-    private final int partIndex;
+    private final PartId partIndex;
 
-    public Get(FileId id, int partIndex) {
+    public Get(FileId id, PartId partIndex) {
         this.id = id;
         this.partIndex = partIndex;
     }
@@ -15,7 +16,7 @@ public class Get implements Message {
         return id;
     }
 
-    public int getPartIndex() {
+    public PartId getPartIndex() {
         return partIndex;
     }
 }
