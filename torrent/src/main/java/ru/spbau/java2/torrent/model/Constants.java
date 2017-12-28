@@ -14,4 +14,11 @@ public class Constants {
         }
         return content;
     }
+
+    public static int normalizePort(int port) {
+        if (port < 0) {
+            port = 32767 + (port - -32768 + 1);
+        }
+        return port;
+    }
 }

@@ -26,6 +26,12 @@ public class ServerStateImpl implements ServerState {
     private final Map<ClientDescriptor, Set<FileId>> clientToFiles = new ConcurrentHashMap<>();
     private final Map<ClientDescriptor, ServerWorker> clientToWorker = new ConcurrentHashMap<>();
 
+    public Map<ClientDescriptor, Integer> getClientToListenerPort() {
+        return clientToListenerPort;
+    }
+
+    private final Map<ClientDescriptor, Integer> clientToListenerPort = new ConcurrentHashMap<>();
+
     public ServerStateImpl(int freeId, Set<FileDescriptor> allFiles) {
         this.allFiles.addAll(allFiles);
         this.freeId = freeId;
@@ -58,9 +64,10 @@ public class ServerStateImpl implements ServerState {
     }
 
     @Override
-    public boolean performUpdate(Update msg, ClientDescriptor client) {
+    public synchronized boolean performUpdate(Update msg, ClientDescriptor client) {
         boolean statusOk = true; // When is it false?
 
+        clientToListenerPort.put(client, msg.getPort());
         clientToFiles.put(client, new HashSet<>());
         clientToFiles.get(client).addAll(msg.getFileIds());
 
@@ -85,7 +92,7 @@ public class ServerStateImpl implements ServerState {
         FileDescriptor fileDescriptor = new FileDescriptor(fileId, name, size);
         allFiles.add(fileDescriptor);
 
-        clientToFiles.get(client).add(fileId);
+        //clientToFiles.get(client).add(fileId);
 
         return fileId;
     }

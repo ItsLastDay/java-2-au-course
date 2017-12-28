@@ -36,7 +36,7 @@ public class ClientImpl {
             while (true) {
                 try {
                     ClientImpl.this.executeUpdate();
-                    Thread.sleep(Constants.UPDATE_TIMEOUT_SEC * 1000 / 2);
+                    Thread.sleep(Constants.UPDATE_TIMEOUT_SEC * 500 / 2);
                 } catch (InterruptedException e) {
                     break;
                 } catch (IOException e) {
@@ -76,9 +76,13 @@ public class ClientImpl {
         Socket socketToServer = new Socket(addr, Constants.SERVER_PORT);
         ServerSocket clientListenerSocket = new ServerSocket(0);
 
+        logger.info(String.format("Connection from client to server established, port %d", socketToServer.getPort()));
+        logger.info(String.format("Client: accepting other clients on port %d", clientListenerSocket.getLocalPort()));
+
         clientNetworkSender = new ClientNetworkSender(state);
         clientListener = new Thread(new ClientNetworkListener(state, clientListenerSocket));
-        clientServerInteractor = new ClientServerInteractor(socketToServer, state);
+        clientServerInteractor = new ClientServerInteractor(socketToServer, state,
+                clientListenerSocket.getLocalPort());
 
         updater.start();
         clientListener.start();

@@ -1,5 +1,6 @@
 package ru.spbau.java2.torrent.messages;
 
+import ru.spbau.java2.torrent.model.Constants;
 import ru.spbau.java2.torrent.model.FileId;
 
 import java.util.Collection;
@@ -25,7 +26,7 @@ public class Update implements Message {
     }
 
     public Update(int port, Collection<FileId> fileIds) {
-        this.port = port;
+        this.port = Constants.normalizePort(port);
         this.fileIds = fileIds;
     }
 

@@ -28,10 +28,16 @@ public class ClientNetworkSender {
         this.state = state;
     }
 
+    private Socket connectToClient(ClientDescriptor client) throws IOException {
+        logger.info(String.format("Client trying to connect to other client with ip %s, port %d",
+                client.getAddress(), client.getPort()));
+        return new Socket(client.getAddress(), client.getPort());
+    }
+
     public void executeGet(ClientDescriptor client, FileId fileId, PartId partId) {
         CompletableFuture.supplyAsync(() -> {
             try {
-                Socket socket = new Socket(client.getAddress(), client.getPort());
+                Socket socket = connectToClient(client);
                 WireFormat wireFormat = new WireFormat(socket);
                 Get msg = new Get(fileId, partId);
                 wireFormat.serializeGet(msg);
@@ -50,7 +56,7 @@ public class ClientNetworkSender {
     public StatAnswer executeStat(ClientDescriptor client, FileId fileId) throws ExecutionException, InterruptedException {
         return executorService.submit(() -> {
             try {
-                Socket socket = new Socket(client.getAddress(), client.getPort());
+                Socket socket = connectToClient(client);
                 WireFormat wireFormat = new WireFormat(socket);
                 Stat msg = new Stat(fileId);
                 wireFormat.serializeStat(msg);

@@ -46,16 +46,21 @@ public class ServerQueryExecutor {
     }
 
     public Message executeSources(Sources msg) {
-        return new SourcesAnswer(state.getClientToFiles().entrySet()
+        java.util.List<ClientDescriptor> clientDescrs = state.getClientToFiles().entrySet()
                 .stream()
                 .filter(entry -> entry.getValue().contains(msg.getId()))
                 .map(Map.Entry::getKey)
-                .collect(Collectors.toList())
-        );
+                .collect(Collectors.toList());
+
+        clientDescrs = clientDescrs.stream()
+                .map(desc -> new ClientDescriptor(desc.getAddress(),
+                        state.getClientToListenerPort().get(desc)))
+                .collect(Collectors.toList());
+        return new SourcesAnswer(clientDescrs);
     }
 
-    public Message executeUpdate(Update msg) {
-        logger.debug("Update received by server from client connected to port " + msg.getPort());
+    public synchronized Message executeUpdate(Update msg) {
+        logger.debug("Update received by server from client that accepts connections to port " + msg.getPort());
         return new UpdateAnswer(state.performUpdate(msg, client));
     }
 }

@@ -14,16 +14,19 @@ public class ClientServerInteractor {
     private final Socket socketToServer;
     private final WireFormat wireFormatter;
     private final ClientState state;
+    private final int listenerPort;
 
-    ClientServerInteractor(Socket socketToServer, ClientState state) throws IOException {
+    ClientServerInteractor(Socket socketToServer, ClientState state,
+                           int listenerPort) throws IOException {
         this.socketToServer = socketToServer;
         this.state = state;
+        this.listenerPort = listenerPort;
 
         wireFormatter = new WireFormat(socketToServer);
     }
 
     public synchronized UpdateAnswer executeUpdate() throws IOException {
-        Update msg = new Update(socketToServer.getPort(), state.getFileToParts().keySet());
+        Update msg = new Update(listenerPort, state.getFileToParts().keySet());
         wireFormatter.serializeUpdate(msg);
         return wireFormatter.deserializeUpdateAnswer();
     }

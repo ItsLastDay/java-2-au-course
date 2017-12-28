@@ -12,7 +12,7 @@ public class ClientDescriptor {
 
     public ClientDescriptor(InetAddress addr, int port) {
         this.addr = addr;
-        this.port = port;
+        this.port = Constants.normalizePort(port);
     }
 
     public InetAddress getAddress() {

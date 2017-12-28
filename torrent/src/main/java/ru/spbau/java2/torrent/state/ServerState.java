@@ -12,6 +12,7 @@ import java.util.Set;
 
 public interface ServerState extends AbstractState {
     Collection<FileDescriptor> getAllFiles();
+    public Map<ClientDescriptor, Integer> getClientToListenerPort();
 
     Map<ClientDescriptor, Set<FileId>> getClientToFiles();
 

@@ -193,7 +193,7 @@ public class WireFormat {
 
     public Update deserializeUpdate() throws IOException {
         assertHeader(4);
-        short port = in.readShort();
+        int port = in.readShort();
         int size = in.readInt();
         Collection<FileId> fileIds = new ArrayList<>();
         for (int i = 0; i < size; i++) {
