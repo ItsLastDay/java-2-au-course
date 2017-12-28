@@ -1,5 +1,7 @@
 package ru.spbau.java2.torrent.files;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ru.spbau.java2.torrent.model.Constants;
 import ru.spbau.java2.torrent.model.FileId;
 import ru.spbau.java2.torrent.model.FilePart;
@@ -14,8 +16,10 @@ import java.util.Arrays;
 import java.util.List;
 
 public class FileManager {
+    private static Logger logger = LogManager.getLogger(FileManager.class);
+
     public List<FilePart> pathToParts(Path path, long size, FileId id) {
-        long needBlocks = size / Constants.FILE_PART_SIZE_BYTES;
+        long needBlocks = (size + Constants.FILE_PART_SIZE_BYTES - 1) / Constants.FILE_PART_SIZE_BYTES;
         List<FilePart> ret = new ArrayList<>();
 
         for (int i = 0; i < needBlocks; i++) {
@@ -58,12 +62,14 @@ public class FileManager {
             endOffset = fileSize;
 
         try (
-                RandomAccessFile file = new RandomAccessFile(part.getBackingFilePath().toString(), "w")
+                RandomAccessFile file = new RandomAccessFile(part.getBackingFilePath().toString(), "rw")
         ) {
             content = Arrays.copyOf(content, (int) (endOffset - startOffset));
             file.seek(startOffset);
             file.write(content);
+            logger.debug(String.format("Successfully copied part %d of file %d", part.getPartIdx().getId(), part.getId().getId()));
         } catch (IOException e) {
+            logger.debug(e.getMessage());
             e.printStackTrace();
         }
     }

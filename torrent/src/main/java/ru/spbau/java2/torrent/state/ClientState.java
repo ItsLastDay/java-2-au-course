@@ -13,11 +13,11 @@ import ru.spbau.java2.torrent.model.PartId;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ClientState implements AbstractState {
     public static Logger logger = LogManager.getLogger(ClientState.class);
@@ -38,19 +38,22 @@ public class ClientState implements AbstractState {
     }
 
 
-    public void registerNewFile(Path path, long size, FileId id) {
+    public  void registerNewFile(Path path, long size, FileId id) {
         List<FilePart> parts = fileManager.pathToParts(path, size, id);
         fileToParts.put(id, parts);
         logger.debug(String.format("Registered new file: %s, %d, %d", path.toString(), size, id.getId()));
     }
 
-    public void registerFilePart(FileId fileId, PartId partId) {
+    public  void registerFilePart(FileId fileId, PartId partId) {
         FilePart part = findPossiblyNonexistantFilePart(fileId, partId);
-        fileToParts.putIfAbsent(fileId, new ArrayList<>());
+        logger.debug(String.format("New part of file %d added: %d", fileId.getId(), partId.getId()));
+        fileToParts.putIfAbsent(fileId, new CopyOnWriteArrayList<>());
         fileToParts.get(fileId).add(part);
     }
 
-    private FilePart findExistingFilePart(FileId id, PartId partId) {
+    private  FilePart findExistingFilePart(FileId id, PartId partId) {
+        if (fileToParts.get(id) == null)
+            return null;
         return fileToParts.get(id).stream().filter(x -> x.getPartIdx().equals(partId))
                 .findFirst().orElse(null);
     }
@@ -62,7 +65,7 @@ public class ClientState implements AbstractState {
                 .orElseThrow(ProtocolViolation::new);
     }
 
-    private FilePart findPossiblyNonexistantFilePart(FileId id, PartId partId) {
+    private  FilePart findPossiblyNonexistantFilePart(FileId id, PartId partId) {
         FilePart part = findExistingFilePart(id, partId);
         if (part != null)
             return part;
@@ -78,8 +81,10 @@ public class ClientState implements AbstractState {
         return fileManager.getContent(findExistingFilePart(id, partIndex));
     }
 
-    public void writePart(FileId fileId, PartId partId, byte[] content) {
+    public  void writePart(FileId fileId, PartId partId, byte[] content) {
         FilePart part = findPossiblyNonexistantFilePart(fileId, partId);
+        logger.debug(String.format("Writing part of %s, idx %d",
+                part.getBackingFilePath().toString(), partId.getId()));
         fileManager.writeContent(part, findFileDescriptor(fileId).getSize(), content);
     }
 

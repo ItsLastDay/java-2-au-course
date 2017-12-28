@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.Scanner;
 
 import static java.lang.System.exit;
@@ -84,6 +85,8 @@ public class CLIRunner {
                         Integer port = Integer.valueOf(split[3]);
                         client.executeStat(new ClientDescriptor(ip, port), new FileId(id))
                                 .getPartIds()
+                                .stream()
+                                .sorted(Comparator.comparingInt(PartId::getId))
                                 .forEach(partId -> System.out.println(partId.getId()));
                     } else if (cmd == 5) {
                         Integer fid = Integer.valueOf(split[1]);

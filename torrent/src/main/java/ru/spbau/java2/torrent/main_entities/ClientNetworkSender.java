@@ -19,7 +19,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ClientNetworkSender {
-    public static Logger logger = LogManager.getLogger(ClientNetworkSender.class);
+    private static Logger logger = LogManager.getLogger(ClientNetworkSender.class);
 
     private final ClientState state;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
@@ -49,8 +49,8 @@ public class ClientNetworkSender {
         }, executorService)
         .thenAccept(answer -> {
             logger.info(String.format("Part %d of file %d downloaded!", partId.getId(), fileId.getId()));
-            state.registerFilePart(fileId, partId);
             state.writePart(fileId, partId, answer.getContent());
+            state.registerFilePart(fileId, partId);
         });
     }
 
