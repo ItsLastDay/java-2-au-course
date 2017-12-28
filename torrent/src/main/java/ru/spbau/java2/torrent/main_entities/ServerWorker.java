@@ -16,8 +16,7 @@ public class ServerWorker implements Runnable {
     private volatile boolean working = true;
 
     public ServerWorker(Socket client, ServerState state) throws IOException {
-        this.client = new ClientDescriptor(client.getInetAddress(),
-                (short) client.getPort());
+        this.client = new ClientDescriptor(client.getInetAddress(), client.getPort());
         this.state = state;
 
         wireFormatter = new WireFormat(client);

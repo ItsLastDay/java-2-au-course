@@ -23,8 +23,7 @@ public class ClientServerInteractor {
     }
 
     public synchronized UpdateAnswer executeUpdate() throws IOException {
-        Update msg = new Update((short) socketToServer.getPort(),
-                state.getFileToParts().keySet());
+        Update msg = new Update(socketToServer.getPort(), state.getFileToParts().keySet());
         wireFormatter.serializeUpdate(msg);
         return wireFormatter.deserializeUpdateAnswer();
     }

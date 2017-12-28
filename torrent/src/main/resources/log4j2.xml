@@ -5,7 +5,7 @@
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
             <Filters>
                 <ThresholdFilter level="FATAL" onMatch="DENY" onMismatch="NEUTRAL"/>
-                <ThresholdFilter level="ERROR" onMatch="ACCEPT"/>
+                <ThresholdFilter level="DEBUG" onMatch="ACCEPT"/>
             </Filters>
         </Console>
         <RollingFile name="RollingFile" fileName="logs/app.log"
@@ -24,7 +24,7 @@
         </RollingFile>
     </Appenders>
     <Loggers>
-        <Root level="INFO">
+        <Root level="DEBUG">
             <AppenderRef ref="RollingFile"/>
             <AppenderRef ref="Console"/>
         </Root>

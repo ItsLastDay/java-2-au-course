@@ -1,5 +1,7 @@
 package ru.spbau.java2.torrent.main_entities;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ru.spbau.java2.torrent.messages.*;
 import ru.spbau.java2.torrent.model.ClientDescriptor;
 import ru.spbau.java2.torrent.model.Constants;
@@ -17,6 +19,8 @@ import java.util.concurrent.ExecutionException;
 
 
 public class ClientImpl {
+    private final static Logger logger = LogManager.getLogger(ClientImpl.class);
+
     private final StateSaver saver = new ClientStateSaver();
     private final ClientState state = (ClientState) saver.recoverState();
 
@@ -80,9 +84,12 @@ public class ClientImpl {
         clientListener.start();
     }
 
-    public void stopClient() {
+    public void stopClient() throws InterruptedException {
+        logger.info("Stopping client");
         clientListener.interrupt();
+        clientListener.join();
         updater.interrupt();
+        updater.join();
 
         saver.saveState(state);
     }

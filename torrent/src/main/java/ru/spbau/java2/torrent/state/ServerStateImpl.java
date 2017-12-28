@@ -15,14 +15,20 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerStateImpl implements ServerState {
     private final Set<FileDescriptor> allFiles = ConcurrentHashMap.newKeySet();
+
+    public int getFreeId() {
+        return freeId;
+    }
+
     private int freeId = 0;
 
     private final Map<ClientDescriptor, Long> clientToLastTimeUpdated = new ConcurrentHashMap<>();
     private final Map<ClientDescriptor, Set<FileId>> clientToFiles = new ConcurrentHashMap<>();
     private final Map<ClientDescriptor, ServerWorker> clientToWorker = new ConcurrentHashMap<>();
 
-    public ServerStateImpl(Set<FileDescriptor> allFiles) {
+    public ServerStateImpl(int freeId, Set<FileDescriptor> allFiles) {
         this.allFiles.addAll(allFiles);
+        this.freeId = freeId;
     }
 
     public ServerStateImpl() {

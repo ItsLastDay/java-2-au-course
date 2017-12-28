@@ -1,15 +1,14 @@
 package ru.spbau.java2.torrent.main_entities;
 
-import ru.spbau.java2.torrent.messages.ListAnswer;
-import ru.spbau.java2.torrent.messages.SourcesAnswer;
-import ru.spbau.java2.torrent.messages.UpdateAnswer;
-import ru.spbau.java2.torrent.messages.UploadAnswer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ru.spbau.java2.torrent.model.Constants;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 
 public class ServerImpl {
+    private final static Logger logger = LogManager.getLogger(ServerImpl.class);
     private final Thread serverListenerThread;
 
     public ServerImpl() throws IOException {
@@ -21,8 +20,10 @@ public class ServerImpl {
         serverListenerThread.start();
     }
 
-    public void stopServer() {
+    public void stopServer() throws InterruptedException {
+        logger.info("Server is shutting down");
         serverListenerThread.interrupt();
+        serverListenerThread.join();
     }
 
 }

@@ -30,7 +30,11 @@ public class CLIRunner {
 
             System.out.println("Enter anything to stop server");
             System.out.println(new Scanner(System.in).nextLine());
-            server.stopServer();
+            try {
+                server.stopServer();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         } else {
             ClientImpl client = new ClientImpl();
             try {
@@ -48,11 +52,13 @@ public class CLIRunner {
                     "\t3 <id> - list sources\n" +
                     "\t4 <id> <ip> <port> - stat existing parts\n" +
                     "\t5 <fid> <pid> <ip> <port> - get part of file\n");
+            System.out.println("Press Ctrl+D to exit");
             while (scanner.hasNextLine()) {
                 String s = scanner.nextLine();
                 String[] split = s.split(" ");
                 int cmd = Integer.valueOf(split[0]);
 
+                System.out.println("Command output: ");
                 try {
                     if (cmd == 1) {
                         ListAnswer listAnswer = client.executeList();
@@ -71,20 +77,27 @@ public class CLIRunner {
                         Integer id = Integer.valueOf(split[1]);
                         InetAddress ip = InetAddress.getByName(split[2]);
                         Integer port = Integer.valueOf(split[3]);
-                        client.executeStat(new ClientDescriptor(ip, port.shortValue()), new FileId(id))
+                        client.executeStat(new ClientDescriptor(ip, port), new FileId(id))
                                 .getPartIds().forEach(partId -> System.out.println(partId.getId()));
                     } else if (cmd == 5) {
                         Integer fid = Integer.valueOf(split[1]);
                         Integer pid = Integer.valueOf(split[2]);
                         InetAddress ip = InetAddress.getByName(split[3]);
                         Integer port = Integer.valueOf(split[4]);
-                        client.executeGet(new ClientDescriptor(ip, port.shortValue()), new FileId(fid),
+                        client.executeGet(new ClientDescriptor(ip, port), new FileId(fid),
                                 new PartId(pid));
                     }
                 } catch (Exception e) {
                     System.out.println("Unsuccessfull command");
                     e.printStackTrace();
                 }
+                System.out.println("End command output");
+            }
+
+            try {
+                client.stopClient();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }

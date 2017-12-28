@@ -8,9 +8,9 @@ import java.util.Objects;
 
 public class ClientDescriptor {
     private final InetAddress addr;
-    private final short port;
+    private final int port;
 
-    public ClientDescriptor(InetAddress addr, short port) {
+    public ClientDescriptor(InetAddress addr, int port) {
         this.addr = addr;
         this.port = port;
     }

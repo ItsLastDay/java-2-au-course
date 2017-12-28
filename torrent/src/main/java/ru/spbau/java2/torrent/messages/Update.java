@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.Objects;
 
 public class Update implements Message {
-    private final short port;
+    private final int port;
     private final Collection<FileId> fileIds;
 
     @Override
@@ -24,12 +24,12 @@ public class Update implements Message {
         return Objects.hash(getPort(), getFileIds());
     }
 
-    public Update(short port, Collection<FileId> fileIds) {
+    public Update(int port, Collection<FileId> fileIds) {
         this.port = port;
         this.fileIds = fileIds;
     }
 
-    public short getPort() {
+    public int getPort() {
         return port;
     }
 
