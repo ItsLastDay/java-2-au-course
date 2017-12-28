@@ -1,19 +1,22 @@
 package ru.spbau.java2.torrent.main_entities;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ru.spbau.java2.torrent.exceptions.ProtocolViolation;
 import ru.spbau.java2.torrent.messages.*;
 import ru.spbau.java2.torrent.model.ClientDescriptor;
-import ru.spbau.java2.torrent.model.WireFormat;
 import ru.spbau.java2.torrent.state.ServerState;
 
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ServerQueryExecutor {
+    private static final Logger logger = LogManager.getLogger(ServerQueryExecutor.class);
+
     private final ClientDescriptor client;
     private final ServerState state;
 
-    public ServerQueryExecutor(ClientDescriptor client, ServerState state, WireFormat wireFormatter) {
+    public ServerQueryExecutor(ClientDescriptor client, ServerState state) {
         this.client = client;
         this.state = state;
     }
@@ -28,6 +31,7 @@ public class ServerQueryExecutor {
         if (Update.class.isInstance(msg))
             return executeUpdate((Update) msg);
 
+        logger.error("Unknown class " + msg.getClass().toString());
         throw new ProtocolViolation();
     }
 
@@ -51,6 +55,7 @@ public class ServerQueryExecutor {
     }
 
     public Message executeUpdate(Update msg) {
+        logger.debug("Update received by server from client connected to port " + msg.getPort());
         return new UpdateAnswer(state.performUpdate(msg, client));
     }
 }

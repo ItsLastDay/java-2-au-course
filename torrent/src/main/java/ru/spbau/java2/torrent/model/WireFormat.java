@@ -13,7 +13,7 @@ public class WireFormat {
     private final DataInputStream in;
 
     private static final byte HEADER_BOGUS_VALUE = 10;
-    private byte headerValue;
+    private byte headerValue = HEADER_BOGUS_VALUE;
 
     public WireFormat(Socket client) throws IOException {
         out = new DataOutputStream(client.getOutputStream());

@@ -6,8 +6,6 @@ import ru.spbau.java2.torrent.model.FilePart;
 import ru.spbau.java2.torrent.model.WireFormat;
 import ru.spbau.java2.torrent.state.ClientState;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.stream.Collectors;

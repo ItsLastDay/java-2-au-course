@@ -7,13 +7,11 @@ import ru.spbau.java2.torrent.model.ClientDescriptor;
 import ru.spbau.java2.torrent.model.FileId;
 import ru.spbau.java2.torrent.model.PartId;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Scanner;
-import java.util.concurrent.ExecutionException;
 
 import static java.lang.System.exit;
 
@@ -31,7 +29,7 @@ public class CLIRunner {
             server.startServer();
 
             System.out.println("Enter anything to stop server");
-            new Scanner(System.in).nextLine();
+            System.out.println(new Scanner(System.in).nextLine());
             server.stopServer();
         } else {
             ClientImpl client = new ClientImpl();
@@ -45,11 +43,11 @@ public class CLIRunner {
 
             Scanner scanner = new Scanner(System.in);
             System.out.println("Commands:\n" +
-                    "\t1 - list files on server" +
-                    "\t2 <path> - upload file" +
-                    "\t3 <id> - list sources" +
-                    "\t4 <id> <ip> <port> - stat existing parts" +
-                    "\t5 <fid> <pid> <ip> <port> - get part of file");
+                    "\t1 - list files on server\n" +
+                    "\t2 <path> - upload file\n" +
+                    "\t3 <id> - list sources\n" +
+                    "\t4 <id> <ip> <port> - stat existing parts\n" +
+                    "\t5 <fid> <pid> <ip> <port> - get part of file\n");
             while (scanner.hasNextLine()) {
                 String s = scanner.nextLine();
                 String[] split = s.split(" ");
@@ -58,9 +56,7 @@ public class CLIRunner {
                 try {
                     if (cmd == 1) {
                         ListAnswer listAnswer = client.executeList();
-                        listAnswer.getFiles().forEach(fl -> {
-                            System.out.println(String.format("%d %s %d", fl.getId().getId(), fl.getName(), fl.getSize()));
-                        });
+                        listAnswer.getFiles().forEach(fl -> System.out.println(String.format("%d %s %d", fl.getId().getId(), fl.getName(), fl.getSize())));
                     } else if (cmd == 2) {
                         Path path = Paths.get(split[1]);
                         System.out.println(String.format("File id is %d",

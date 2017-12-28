@@ -11,14 +11,14 @@ public class ServerStateSaver implements StateSaver {
 
     @Override
     public void saveState(AbstractState state_) {
-        if (!ServerState.class.isInstance(state_))
+        if (!ServerStateImpl.class.isInstance(state_))
             throw new IllegalArgumentException();
         ServerState state = (ServerState) state_;
 
 
         try (
                 FileOutputStream fileOutputStream = new FileOutputStream(SERVER_STATE_FILE_NAME);
-                DataOutputStream out = new DataOutputStream(fileOutputStream);
+                DataOutputStream out = new DataOutputStream(fileOutputStream)
                 ) {
             out.writeInt(state.getAllFiles().size());
             for (FileDescriptor fileDescriptor : state.getAllFiles()) {
@@ -44,17 +44,17 @@ public class ServerStateSaver implements StateSaver {
     public AbstractState recoverState() {
         try (
                 FileInputStream fileInputStream = new FileInputStream(SERVER_STATE_FILE_NAME);
-                DataInputStream in = new DataInputStream(fileInputStream);
+                DataInputStream in = new DataInputStream(fileInputStream)
         ) {
             int size = in.readInt();
             Set<FileDescriptor> allFiles = new HashSet<>();
             for (int i = 0; i < size; i++) {
                 allFiles.add(FileDescriptor.fromStream(in));
             }
-            return new ServerState(allFiles);
+            return new ServerStateImpl(allFiles);
         } catch (IOException e) {
             System.out.println("Recovered empty server state");
-            return new ServerState();
+            return new ServerStateImpl();
         }
 
     }

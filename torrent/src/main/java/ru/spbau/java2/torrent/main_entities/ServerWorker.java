@@ -5,8 +5,6 @@ import ru.spbau.java2.torrent.model.ClientDescriptor;
 import ru.spbau.java2.torrent.model.WireFormat;
 import ru.spbau.java2.torrent.state.ServerState;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
@@ -23,7 +21,7 @@ public class ServerWorker implements Runnable {
         this.state = state;
 
         wireFormatter = new WireFormat(client);
-        executor = new ServerQueryExecutor(this.client, state, wireFormatter);
+        executor = new ServerQueryExecutor(this.client, state);
         state.registerWorker(this.client, this);
     }
 

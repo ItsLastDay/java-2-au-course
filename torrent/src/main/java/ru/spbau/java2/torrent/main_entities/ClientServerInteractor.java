@@ -44,7 +44,7 @@ public class ClientServerInteractor {
     public synchronized UploadAnswer executeUpload(String path_, long size) throws IOException {
         Path path = Paths.get(path_);
         path = path.normalize();
-        Path fileName = path.getName(-1);
+        Path fileName = path.getName(path.getNameCount() - 1);
 
         Upload msg = new Upload(fileName.toString(), size);
         wireFormatter.serializeUpload(msg);
