@@ -20,7 +20,7 @@ public class ClientNetworkSender {
     private static Logger logger = LogManager.getLogger(ClientNetworkSender.class);
 
     private final ClientState state;
-    private final ExecutorService executorService = Executors.newCachedThreadPool();
+    private final ExecutorService executorService = Executors.newFixedThreadPool(5);
 
     public ClientNetworkSender(ClientState state) {
         this.state = state;

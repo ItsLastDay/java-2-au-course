@@ -34,7 +34,7 @@ public class ClientState implements AbstractState {
     }
 
     public ClientState(Map<FileId, List<FilePart>> map) {
-        map.forEach(fileToParts::put);
+        map.putAll(fileToParts);
     }
 
 
