@@ -1,5 +1,7 @@
 package ru.spbau.java2.torrent.state;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ru.spbau.java2.torrent.exceptions.ProtocolViolation;
 import ru.spbau.java2.torrent.files.FileManager;
 import ru.spbau.java2.torrent.messages.ListAnswer;
@@ -11,12 +13,15 @@ import ru.spbau.java2.torrent.model.PartId;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ClientState implements AbstractState {
+    public static Logger logger = LogManager.getLogger(ClientState.class);
+
     private final Map<FileId, List<FilePart>> fileToParts = new ConcurrentHashMap<>();
     private final FileManager fileManager = new FileManager();
     private final Set<FileDescriptor> descriptors = ConcurrentHashMap.newKeySet();
@@ -36,6 +41,13 @@ public class ClientState implements AbstractState {
     public void registerNewFile(Path path, long size, FileId id) {
         List<FilePart> parts = fileManager.pathToParts(path, size, id);
         fileToParts.put(id, parts);
+        logger.debug(String.format("Registered new file: %s, %d, %d", path.toString(), size, id.getId()));
+    }
+
+    public void registerFilePart(FileId fileId, PartId partId) {
+        FilePart part = findPossiblyNonexistantFilePart(fileId, partId);
+        fileToParts.putIfAbsent(fileId, new ArrayList<>());
+        fileToParts.get(fileId).add(part);
     }
 
     private FilePart findExistingFilePart(FileId id, PartId partId) {

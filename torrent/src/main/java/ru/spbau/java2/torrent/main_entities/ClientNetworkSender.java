@@ -49,6 +49,7 @@ public class ClientNetworkSender {
         }, executorService)
         .thenAccept(answer -> {
             logger.info(String.format("Part %d of file %d downloaded!", partId.getId(), fileId.getId()));
+            state.registerFilePart(fileId, partId);
             state.writePart(fileId, partId, answer.getContent());
         });
     }

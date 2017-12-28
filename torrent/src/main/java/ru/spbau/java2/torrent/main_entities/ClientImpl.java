@@ -36,7 +36,7 @@ public class ClientImpl {
             while (true) {
                 try {
                     ClientImpl.this.executeUpdate();
-                    Thread.sleep(Constants.UPDATE_TIMEOUT_SEC * 500 / 2);
+                    Thread.sleep(Constants.UPDATE_TIMEOUT_SEC * 5 / 2);
                 } catch (InterruptedException e) {
                     break;
                 } catch (IOException e) {

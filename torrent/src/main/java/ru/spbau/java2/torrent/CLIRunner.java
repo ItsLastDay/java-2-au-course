@@ -51,12 +51,17 @@ public class CLIRunner {
                     "\t2 <path> - upload file\n" +
                     "\t3 <id> - list sources\n" +
                     "\t4 <id> <ip> <port> - stat existing parts\n" +
-                    "\t5 <fid> <pid> <ip> <port> - get part of file\n");
+                    "\t5 <fid> <number-of-parts> <ip> <port> - get all parts of file\n");
             System.out.println("Press Ctrl+D to exit");
             while (scanner.hasNextLine()) {
                 String s = scanner.nextLine();
                 String[] split = s.split(" ");
-                int cmd = Integer.valueOf(split[0]);
+                int cmd;
+                try {
+                    cmd = Integer.valueOf(split[0]);
+                } catch (NumberFormatException e) {
+                    continue;
+                }
 
                 System.out.println("Command output: ");
                 try {
@@ -78,14 +83,17 @@ public class CLIRunner {
                         InetAddress ip = InetAddress.getByName(split[2]);
                         Integer port = Integer.valueOf(split[3]);
                         client.executeStat(new ClientDescriptor(ip, port), new FileId(id))
-                                .getPartIds().forEach(partId -> System.out.println(partId.getId()));
+                                .getPartIds()
+                                .forEach(partId -> System.out.println(partId.getId()));
                     } else if (cmd == 5) {
                         Integer fid = Integer.valueOf(split[1]);
                         Integer pid = Integer.valueOf(split[2]);
                         InetAddress ip = InetAddress.getByName(split[3]);
                         Integer port = Integer.valueOf(split[4]);
-                        client.executeGet(new ClientDescriptor(ip, port), new FileId(fid),
-                                new PartId(pid));
+                        for (int i = 0; i < pid; i++) {
+                            client.executeGet(new ClientDescriptor(ip, port), new FileId(fid),
+                                    new PartId(i));
+                        }
                     }
                 } catch (Exception e) {
                     System.out.println("Unsuccessfull command");

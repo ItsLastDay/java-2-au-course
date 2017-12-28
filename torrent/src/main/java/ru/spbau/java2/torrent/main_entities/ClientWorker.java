@@ -1,5 +1,7 @@
 package ru.spbau.java2.torrent.main_entities;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ru.spbau.java2.torrent.exceptions.ProtocolViolation;
 import ru.spbau.java2.torrent.messages.*;
 import ru.spbau.java2.torrent.model.FilePart;
@@ -11,10 +13,13 @@ import java.net.Socket;
 import java.util.stream.Collectors;
 
 public class ClientWorker implements Runnable {
+    public static Logger logger = LogManager.getLogger(ClientWorker.class);
+
     private final ClientState state;
     private final WireFormat wireFormatter;
 
     public ClientWorker(ClientState state, Socket client) throws IOException {
+        logger.debug("Client-client worker spawned");
         wireFormatter = new WireFormat(client);
         this.state = state;
     }
