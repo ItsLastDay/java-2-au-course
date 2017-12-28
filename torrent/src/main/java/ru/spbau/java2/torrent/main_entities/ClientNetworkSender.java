@@ -5,14 +5,12 @@ import org.apache.logging.log4j.Logger;
 import ru.spbau.java2.torrent.messages.Get;
 import ru.spbau.java2.torrent.messages.Stat;
 import ru.spbau.java2.torrent.messages.StatAnswer;
-import ru.spbau.java2.torrent.model.ClientDescriptor;
-import ru.spbau.java2.torrent.model.FileId;
-import ru.spbau.java2.torrent.model.PartId;
-import ru.spbau.java2.torrent.model.WireFormat;
+import ru.spbau.java2.torrent.model.*;
 import ru.spbau.java2.torrent.state.ClientState;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -35,6 +33,14 @@ public class ClientNetworkSender {
     }
 
     public void executeGet(ClientDescriptor client, FileId fileId, PartId partId) {
+        List<FilePart> fileParts = state.getFileToParts().get(fileId);
+        if (fileParts != null) {
+            if (fileParts.stream().filter(x -> x.getPartIdx().equals(partId))
+                    .findFirst().orElse(null) != null) {
+                // Part already stored.
+                return;
+            }
+        }
         CompletableFuture.supplyAsync(() -> {
             try {
                 Socket socket = connectToClient(client);
